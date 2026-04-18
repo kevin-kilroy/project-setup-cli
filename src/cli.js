@@ -1,6 +1,11 @@
 import { Command } from 'commander'
 import { createCommand } from './commands/create.js'
 
+/**
+ * Main commander program for project-init.
+ *
+ * Registers commands and global program metadata.
+ */
 const program = new Command()
 
 program
@@ -23,7 +28,12 @@ program
     .option('-y, --yes', 'accept defaults for missing decisions')
     .action(createCommand)
 
-program.parseAsync(process.argv).catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error))
-    process.exitCode = 1
-})
+program.parseAsync(process.argv).catch(
+    /**
+     * @param {unknown} error
+     */
+    (error) => {
+        console.error(error instanceof Error ? error.message : String(error))
+        process.exitCode = 1
+    },
+)

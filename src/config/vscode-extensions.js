@@ -1,3 +1,15 @@
+/**
+ * @typedef {Object} ExtensionGroup
+ * @property {string} id
+ * @property {string} label
+ * @property {string[]} extensions
+ */
+
+/**
+ * Catalog of extension recommendation groups.
+ *
+ * @type {ExtensionGroup[]}
+ */
 export const extensionGroups = [
     {
         id: 'general',

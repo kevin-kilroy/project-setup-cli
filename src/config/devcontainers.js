@@ -1,3 +1,16 @@
+/**
+ * @typedef {Object} DevcontainerOption
+ * @property {string} id
+ * @property {string} label
+ * @property {string} image
+ * @property {string} description
+ */
+
+/**
+ * Catalog of supported dev container base options.
+ *
+ * @type {DevcontainerOption[]}
+ */
 export const devcontainerOptions = [
     {
         id: 'base-ubuntu',

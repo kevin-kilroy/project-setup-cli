@@ -1,5 +1,19 @@
 import { runCommand } from './exec.js'
 
+/**
+ * @typedef {Object} GithubRepoOptions
+ * @property {string} projectPath
+ * @property {string} projectName
+ * @property {'public' | 'private'} githubVisibility
+ * @property {string} githubDescription
+ */
+
+/**
+ * Creates a GitHub repository from the local project using the gh CLI.
+ *
+ * @param {GithubRepoOptions} options
+ * @returns {Promise<void>}
+ */
 export async function createGithubRepo({
     projectPath,
     projectName,
