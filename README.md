@@ -16,6 +16,7 @@ This CLI is intentionally a repository bootstrap tool, not an application scaffo
   - .vscode/extensions.json
   - .devcontainer/devcontainer.json
 - Interactive guided flow with a confirmation step.
+- Cleanup command for removing generated bootstrap artifacts during testing.
 - Config-driven catalogs for dev container bases and VS Code extension groups.
 
 ## Requirements
@@ -28,14 +29,20 @@ This CLI is intentionally a repository bootstrap tool, not an application scaffo
 
 ```bash
 npm install
-npm link
-project-init create my-repo --interactive
+npm run start
 ```
 
-Initialize in the current directory instead:
+Or use the linked command directly:
 
 ```bash
-project-init create --in-place --interactive
+npm link
+project-init
+```
+
+You can still run the explicit create command:
+
+```bash
+project-init create my-repo --interactive
 ```
 
 ## Install
@@ -52,6 +59,18 @@ npm link
 
 ## Usage
 
+Start the interactive wizard (no inputs required):
+
+```bash
+project-init
+```
+
+Equivalent during local development:
+
+```bash
+npm run start
+```
+
 Show help:
 
 ```bash
@@ -64,11 +83,17 @@ Create command:
 project-init create [name] [options]
 ```
 
+Cleanup command:
+
+```bash
+project-init cleanup [path] [options]
+```
+
 Examples:
 
 ```bash
-# Fully interactive
-project-init create my-repo --interactive
+# Fully interactive from root command
+project-init
 
 # Non-interactive defaults for missing values
 project-init create my-repo --yes
@@ -78,9 +103,22 @@ project-init create --in-place --yes
 
 # Request GitHub + VS Code recommendations + dev container
 project-init create my-repo --github --vscode --devcontainer --interactive
+
+# Preview cleanup for current directory
+project-init cleanup --dry-run
+
+# Cleanup generated artifacts in a target path
+project-init cleanup ./my-repo
+
+# Cleanup without prompts and remove local origin remote too
+project-init cleanup ./my-repo --include-git --yes
 ```
 
 ## Command Options
+
+These apply to the explicit create command:
+
+- project-init create [name] [options]
 
 - --private: create a private GitHub repository
 - --public: create a public GitHub repository
@@ -92,6 +130,14 @@ project-init create my-repo --github --vscode --devcontainer --interactive
 - --skip-github: skip GitHub repository creation
 - --in-place: use the current directory as the project folder
 - -y, --yes: accept defaults for missing decisions
+
+These apply to cleanup:
+
+- project-init cleanup [path] [options]
+
+- --dry-run: preview what would be deleted without removing files
+- --include-git: also remove local origin remote if present
+- -y, --yes: skip confirmation prompts
 
 ## Interactive Flow
 
@@ -149,6 +195,8 @@ The tool can generate only repository infrastructure files:
 
 It does not generate application structure such as src directories, test directories, framework files, or language manifests.
 
+Cleanup removes only these generated files and will not delete your project directory or .git folder.
+
 ## Scripts
 
 - npm run start: run CLI entrypoint
@@ -185,3 +233,10 @@ project-init/
 	tests/
 		files.test.js
 ```
+
+## Documentation and Comments
+
+This project keeps user-facing docs and JSDoc comments aligned with behavior changes.
+
+- Update this README whenever command entrypoints, flags, defaults, or flow steps change.
+- Update JSDoc in source files when function parameters, return values, or side effects change.
