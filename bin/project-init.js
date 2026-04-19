@@ -5,4 +5,4 @@
  *
  * Loads the main CLI program from the source entrypoint.
  */
-import '../src/cli.js'
+import "../src/cli.js";

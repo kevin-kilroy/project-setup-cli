@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import chalk from "chalk";
 
 /**
  * Prints a section heading in cyan.
@@ -6,7 +6,7 @@ import chalk from 'chalk'
  * @param {string} title
  */
 export function section(title) {
-    console.log(chalk.cyan(`\n${title}`))
+  console.log(chalk.cyan(`\n${title}`));
 }
 
 /**
@@ -15,7 +15,7 @@ export function section(title) {
  * @param {string} message
  */
 export function success(message) {
-    console.log(chalk.green(message))
+  console.log(chalk.green(message));
 }
 
 /**
@@ -24,7 +24,7 @@ export function success(message) {
  * @param {string} message
  */
 export function warn(message) {
-    console.log(chalk.yellow(message))
+  console.log(chalk.yellow(message));
 }
 
 /**
@@ -33,7 +33,7 @@ export function warn(message) {
  * @param {string} message
  */
 export function error(message) {
-    console.error(chalk.red(message))
+  console.error(chalk.red(message));
 }
 
 /**
@@ -42,7 +42,7 @@ export function error(message) {
  * @param {string} message
  */
 export function note(message) {
-    console.log(chalk.gray(message))
+  console.log(chalk.gray(message));
 }
 
 /**
@@ -51,8 +51,8 @@ export function note(message) {
  * @param {string[]} lines Summary lines to display.
  */
 export function printSummary(lines) {
-    section('Summary')
-    for (const line of lines) {
-        console.log(chalk.yellow(line))
-    }
+  section("Summary");
+  for (const line of lines) {
+    console.log(chalk.yellow(line));
+  }
 }
