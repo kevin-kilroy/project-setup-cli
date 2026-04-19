@@ -59,7 +59,7 @@ npm link
 
 ## Usage
 
-Start the interactive wizard (no inputs required):
+Start the interactive root menu (no inputs required):
 
 ```bash
 project-init
@@ -110,6 +110,12 @@ project-init cleanup --dry-run
 # Cleanup generated artifacts in a target path
 project-init cleanup ./my-repo
 
+# Delete all files in target path but keep directory
+project-init cleanup ./my-repo --all-files
+
+# Delete target directory and everything in it
+project-init cleanup ./my-repo --delete-directory
+
 # Cleanup without prompts and remove local origin remote too
 project-init cleanup ./my-repo --include-git --yes
 ```
@@ -136,19 +142,32 @@ These apply to cleanup:
 - project-init cleanup [path] [options]
 
 - --dry-run: preview what would be deleted without removing files
+- --all-files: delete all files and folders in target directory but keep the directory
+- --delete-directory: delete target directory and all contents
 - --include-git: also remove local origin remote if present
 - -y, --yes: skip confirmation prompts
 
 ## Interactive Flow
 
-The create command walks through:
+Running the root command walks through:
+
+1. Action selection: create a new project or remove a project
+
+If you choose create, it walks through:
 
 1. Project basics
 2. GitHub options
 3. Repo-level files
 4. Editor support
-5. Dev container
+5. Dev container (including separate dev-container extension selection)
 6. Confirmation summary
+
+If you choose remove, it walks through cleanup options consistent with project-init cleanup:
+
+1. Target project path (prefilled with current working directory)
+2. Deletion scope: remove all files in directory or delete the directory itself
+3. Dry run or actual deletion
+4. Skip confirmations or keep safety prompts
 
 ## Defaults
 
@@ -162,11 +181,11 @@ Current defaults are defined in src/config/defaults.js:
 - Add .gitignore: yes
 - Add .editorconfig: no
 - Add VS Code recommendations: no
-- Default extension groups: general
+- Default recommended repo extensions: GitLens and EditorConfig
 - Add dev container: no
 - Default dev container base: base-ubuntu
 - Include GitHub CLI in dev container: yes
-- Include selected editor extensions in dev container customizations: yes
+- Add VS Code extensions to dev container: yes
 
 ## Config Catalogs
 
@@ -176,7 +195,7 @@ Dev container options in src/config/devcontainers.js:
 - javascript-node
 - python
 
-VS Code extension groups in src/config/vscode-extensions.js:
+VS Code extension catalog in src/config/vscode-extensions.js:
 
 - general
 - containers
@@ -195,7 +214,11 @@ The tool can generate only repository infrastructure files:
 
 It does not generate application structure such as src directories, test directories, framework files, or language manifests.
 
-Cleanup removes only these generated files and will not delete your project directory or .git folder.
+Cleanup supports three modes:
+
+- Generated-only cleanup (default for explicit cleanup command): removes only bootstrap files listed above.
+- All-files cleanup: removes all files/folders inside the target directory but keeps the directory.
+- Delete-directory cleanup: removes the target directory itself and all contents.
 
 ## Scripts
 

@@ -2,7 +2,6 @@ import { mkdir, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { templateDefaults } from '../config/defaults.js'
 import { devcontainerOptions } from '../config/devcontainers.js'
-import { extensionGroups } from '../config/vscode-extensions.js'
 
 /**
  * @typedef {Object} FileAnswers
@@ -14,21 +13,21 @@ import { extensionGroups } from '../config/vscode-extensions.js'
  * @property {boolean} addEditorconfig
  * @property {boolean} addVscode
  * @property {boolean} addDevcontainer
- * @property {string[]} extensionGroupIds
+ * @property {string[]} recommendedExtensionIds
  * @property {string} devcontainerId
  * @property {boolean} includeGithubCliInDevcontainer
- * @property {boolean} includeEditorExtensionsInDevcontainer
+ * @property {boolean} addDevcontainerExtensions
+ * @property {string[]} devcontainerExtensionIds
  */
 
 /**
- * Expands extension group ids into a unique extension recommendation list.
+ * Deduplicates extension ids while preserving order.
  *
- * @param {string[]} groupIds
+ * @param {string[]} extensionIds
  * @returns {string[]}
  */
-export function collectExtensionIds(groupIds) {
-    const selectedGroups = extensionGroups.filter((group) => groupIds.includes(group.id))
-    return [...new Set(selectedGroups.flatMap((group) => group.extensions))]
+export function collectUniqueExtensionIds(extensionIds) {
+    return [...new Set(extensionIds)]
 }
 
 /**
@@ -45,7 +44,6 @@ function renderReadme(projectName) {
  * Builds devcontainer JSON content from user selections.
  *
  * @param {FileAnswers} answers
- * @param {string[]} extensionIds
  * @returns {{
  *   name: string,
  *   image: string,
@@ -53,7 +51,7 @@ function renderReadme(projectName) {
  *   customizations: Record<string, unknown>
  * }}
  */
-function buildDevcontainerConfig(answers, extensionIds) {
+function buildDevcontainerConfig(answers) {
     const option = devcontainerOptions.find((candidate) => candidate.id === answers.devcontainerId)
     if (!option) {
         throw new Error(`Unknown dev container id: ${answers.devcontainerId}`)
@@ -65,8 +63,9 @@ function buildDevcontainerConfig(answers, extensionIds) {
     }
 
     const customizations = {}
-    if (answers.includeEditorExtensionsInDevcontainer) {
-        customizations.vscode = { extensions: extensionIds }
+    if (answers.addDevcontainerExtensions) {
+        const uniqueExtensions = collectUniqueExtensionIds(answers.devcontainerExtensionIds)
+        customizations.vscode = { extensions: uniqueExtensions }
     }
 
     return {
@@ -112,7 +111,7 @@ export async function createProjectFiles(answers) {
     await assertNonEmptyDirectoryAllowed(answers.projectPath, answers.useCurrentDirectory)
     await mkdir(answers.projectPath, { recursive: true })
 
-    const extensionIds = collectExtensionIds(answers.extensionGroupIds)
+    const extensionIds = collectUniqueExtensionIds(answers.recommendedExtensionIds)
 
     if (answers.addReadme) {
         await writeFile(
@@ -148,7 +147,7 @@ export async function createProjectFiles(answers) {
     if (answers.addDevcontainer) {
         const devcontainerDir = path.join(answers.projectPath, '.devcontainer')
         await mkdir(devcontainerDir, { recursive: true })
-        const config = buildDevcontainerConfig(answers, extensionIds)
+        const config = buildDevcontainerConfig(answers)
         await writeFile(
             path.join(devcontainerDir, 'devcontainer.json'),
             `${JSON.stringify(config, null, 2)}\n`,

@@ -8,11 +8,12 @@
  * @property {boolean} addGitignore
  * @property {boolean} addEditorconfig
  * @property {boolean} addVscode
- * @property {string[]} extensionGroupIds
+ * @property {string[]} recommendedExtensionIds
  * @property {boolean} addDevcontainer
  * @property {string} devcontainerId
  * @property {boolean} includeGithubCliInDevcontainer
- * @property {boolean} includeEditorExtensionsInDevcontainer
+ * @property {boolean} addDevcontainerExtensions
+ * @property {string[]} devcontainerExtensionIds
  * @property {boolean} useCurrentDirectory
  */
 
@@ -37,11 +38,12 @@ export const defaults = {
     addGitignore: true,
     addEditorconfig: false,
     addVscode: false,
-    extensionGroupIds: ['general'],
+    recommendedExtensionIds: ['eamodio.gitlens', 'editorconfig.editorconfig'],
     addDevcontainer: false,
     devcontainerId: 'base-ubuntu',
     includeGithubCliInDevcontainer: true,
-    includeEditorExtensionsInDevcontainer: true,
+    addDevcontainerExtensions: true,
+    devcontainerExtensionIds: ['eamodio.gitlens', 'editorconfig.editorconfig'],
     useCurrentDirectory: false,
 }
 

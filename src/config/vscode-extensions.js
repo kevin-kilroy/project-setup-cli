@@ -6,6 +6,12 @@
  */
 
 /**
+ * @typedef {Object} ExtensionChoice
+ * @property {string} name
+ * @property {string} value
+ */
+
+/**
  * Catalog of extension recommendation groups.
  *
  * @type {ExtensionGroup[]}
@@ -32,3 +38,15 @@ export const extensionGroups = [
         extensions: ['ms-python.python', 'ms-python.vscode-pylance'],
     },
 ]
+
+/**
+ * Flattened extension choices for interactive multiselect prompts.
+ *
+ * @type {ExtensionChoice[]}
+ */
+export const extensionChoices = extensionGroups.flatMap((group) =>
+    group.extensions.map((extensionId) => ({
+        name: `${group.label}: ${extensionId}`,
+        value: extensionId,
+    })),
+)

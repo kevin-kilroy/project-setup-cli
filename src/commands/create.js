@@ -1,8 +1,8 @@
 import { createProjectFiles } from '../lib/files.js'
 import { commitInitialFiles, initGitRepo, pushInitialCommit } from '../lib/git.js'
 import { createGithubRepo } from '../lib/github.js'
-import { error, note, printSummary, section, success, warn } from '../lib/output.js'
-import { buildSummaryLines, collectAnswers } from '../lib/prompts.js'
+import { error, note, section, success, warn } from '../lib/output.js'
+import { collectAnswers } from '../lib/prompts.js'
 
 /**
  * Orchestrates repository bootstrap from parsed CLI arguments.
@@ -15,7 +15,6 @@ export async function createCommand(name, options) {
     section('Repository bootstrap')
 
     const answers = await collectAnswers({ name, options })
-    printSummary(buildSummaryLines(answers))
 
     if (!answers.confirmed) {
         note('Cancelled.')

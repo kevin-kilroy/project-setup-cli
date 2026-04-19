@@ -2,8 +2,8 @@ import path from 'node:path'
 import inquirer from 'inquirer'
 import { defaults } from '../config/defaults.js'
 import { devcontainerOptions } from '../config/devcontainers.js'
-import { extensionGroups } from '../config/vscode-extensions.js'
-import { section } from './output.js'
+import { extensionChoices } from '../config/vscode-extensions.js'
+import { printSummary, section } from './output.js'
 
 /**
  * @typedef {Object} PromptOptions
@@ -31,11 +31,12 @@ import { section } from './output.js'
  * @property {boolean | undefined} addGitignore
  * @property {boolean | undefined} addEditorconfig
  * @property {boolean | undefined} addVscode
- * @property {string[] | undefined} extensionGroupIds
+ * @property {string[] | undefined} recommendedExtensionIds
  * @property {boolean | undefined} addDevcontainer
  * @property {string | undefined} devcontainerId
  * @property {boolean | undefined} includeGithubCliInDevcontainer
- * @property {boolean | undefined} includeEditorExtensionsInDevcontainer
+ * @property {boolean | undefined} addDevcontainerExtensions
+ * @property {string[] | undefined} devcontainerExtensionIds
  * @property {string | undefined} projectName
  */
 
@@ -54,11 +55,12 @@ import { section } from './output.js'
  * @property {boolean} addGitignore
  * @property {boolean} addEditorconfig
  * @property {boolean} addVscode
- * @property {string[]} extensionGroupIds
+ * @property {string[]} recommendedExtensionIds
  * @property {boolean} addDevcontainer
  * @property {string} devcontainerId
  * @property {boolean} includeGithubCliInDevcontainer
- * @property {boolean} includeEditorExtensionsInDevcontainer
+ * @property {boolean} addDevcontainerExtensions
+ * @property {string[]} devcontainerExtensionIds
  * @property {boolean} confirmed
  */
 
@@ -116,14 +118,17 @@ function deriveFlagAnswers(options) {
         addGitignore: undefined,
         addEditorconfig: options.editorconfig === true ? true : undefined,
         addVscode: options.vscode === true ? true : undefined,
-        extensionGroupIds: options.vscode ? defaults.extensionGroupIds : undefined,
+        recommendedExtensionIds: options.vscode ? defaults.recommendedExtensionIds : undefined,
         addDevcontainer: options.devcontainer === true ? true : undefined,
         devcontainerId: options.devcontainer ? defaults.devcontainerId : undefined,
         includeGithubCliInDevcontainer: options.devcontainer
             ? defaults.includeGithubCliInDevcontainer
             : undefined,
-        includeEditorExtensionsInDevcontainer: options.devcontainer
-            ? defaults.includeEditorExtensionsInDevcontainer
+        addDevcontainerExtensions: options.devcontainer
+            ? defaults.addDevcontainerExtensions
+            : undefined,
+        devcontainerExtensionIds: options.devcontainer
+            ? defaults.devcontainerExtensionIds
             : undefined,
         projectName: options.name,
     }
@@ -141,6 +146,8 @@ function withDefaults(answers, cwd) {
     const projectPath = answers.useCurrentDirectory
         ? cwd
         : path.resolve(answers.parentDirectory || cwd, projectName)
+    const resolvedAddDevcontainerExtensions =
+        answers.addDevcontainerExtensions ?? defaults.addDevcontainerExtensions
 
     return {
         ...answers,
@@ -154,14 +161,18 @@ function withDefaults(answers, cwd) {
         addGitignore: answers.addGitignore ?? defaults.addGitignore,
         addEditorconfig: answers.addEditorconfig ?? defaults.addEditorconfig,
         addVscode: answers.addVscode ?? defaults.addVscode,
-        extensionGroupIds: answers.extensionGroupIds ?? defaults.extensionGroupIds,
+        recommendedExtensionIds:
+            answers.recommendedExtensionIds ?? defaults.recommendedExtensionIds,
         addDevcontainer: answers.addDevcontainer ?? defaults.addDevcontainer,
         devcontainerId: answers.devcontainerId ?? defaults.devcontainerId,
         includeGithubCliInDevcontainer:
             answers.includeGithubCliInDevcontainer ?? defaults.includeGithubCliInDevcontainer,
-        includeEditorExtensionsInDevcontainer:
-            answers.includeEditorExtensionsInDevcontainer ??
-            defaults.includeEditorExtensionsInDevcontainer,
+        addDevcontainerExtensions: resolvedAddDevcontainerExtensions,
+        devcontainerExtensionIds:
+            answers.devcontainerExtensionIds ??
+            (resolvedAddDevcontainerExtensions
+                ? (answers.recommendedExtensionIds ?? defaults.recommendedExtensionIds)
+                : []),
         useCurrentDirectory: answers.useCurrentDirectory ?? defaults.useCurrentDirectory,
     }
 }
@@ -264,6 +275,7 @@ async function askMultiChoice(name, message, choices, defaultValue) {
             message,
             choices,
             default: defaultValue,
+            loop: false,
         },
     ])
     return response[name]
@@ -296,8 +308,9 @@ export function buildSummaryLines(answers) {
                 .filter(Boolean)
                 .join(', ') || 'none'
         }`,
-        `Extension groups: ${answers.addVscode ? answers.extensionGroupIds.join(', ') || 'none' : 'n/a'}`,
+        `Repo VS Code recommendations: ${answers.addVscode ? answers.recommendedExtensionIds.join(', ') || 'none' : 'n/a'}`,
         `Dev container base: ${answers.addDevcontainer ? selectedDevcontainer?.label || answers.devcontainerId : 'no'}`,
+        `Dev container extensions: ${answers.addDevcontainer ? (answers.addDevcontainerExtensions ? answers.devcontainerExtensionIds.join(', ') || 'none' : 'none') : 'n/a'}`,
     ]
 }
 
@@ -390,18 +403,15 @@ export async function collectAnswers({ name, options, cwd = process.cwd() }) {
         ? await askYesNo('addVscode', 'Add VS Code recommendations?', defaults.addVscode)
         : flags.addVscode
 
-    const extensionGroupIds = addVscode
-        ? requiresPrompt(flags.extensionGroupIds, interactiveMode)
+    const recommendedExtensionIds = addVscode
+        ? requiresPrompt(flags.recommendedExtensionIds, interactiveMode)
             ? await askMultiChoice(
-                  'extensionGroupIds',
-                  'Choose extension groups:',
-                  extensionGroups.map((group) => ({
-                      name: group.label,
-                      value: group.id,
-                  })),
-                  defaults.extensionGroupIds,
+                  'recommendedExtensionIds',
+                  'Choose recommended VS Code extensions for this repo:',
+                  extensionChoices,
+                  defaults.recommendedExtensionIds,
               )
-            : flags.extensionGroupIds
+            : flags.recommendedExtensionIds
         : []
 
     section('Step 5: Dev container')
@@ -433,15 +443,25 @@ export async function collectAnswers({ name, options, cwd = process.cwd() }) {
             : flags.includeGithubCliInDevcontainer
         : false
 
-    const includeEditorExtensionsInDevcontainer = addDevcontainer
-        ? requiresPrompt(flags.includeEditorExtensionsInDevcontainer, interactiveMode)
+    const addDevcontainerExtensions = addDevcontainer
+        ? requiresPrompt(flags.addDevcontainerExtensions, interactiveMode)
             ? await askYesNo(
-                  'includeEditorExtensionsInDevcontainer',
-                  'Include selected editor extensions in container customizations?',
-                  defaults.includeEditorExtensionsInDevcontainer,
+                  'addDevcontainerExtensions',
+                  'Add VS Code extensions to the dev container?',
+                  defaults.addDevcontainerExtensions,
               )
-            : flags.includeEditorExtensionsInDevcontainer
+            : flags.addDevcontainerExtensions
         : false
+
+    const devcontainerExtensionIds =
+        addDevcontainer && addDevcontainerExtensions
+            ? await askMultiChoice(
+                  'devcontainerExtensionIds',
+                  'Choose VS Code extensions for the dev container:',
+                  extensionChoices,
+                  addVscode ? recommendedExtensionIds : defaults.devcontainerExtensionIds,
+              )
+            : []
 
     const merged = withDefaults(
         {
@@ -457,16 +477,18 @@ export async function collectAnswers({ name, options, cwd = process.cwd() }) {
             addGitignore,
             addEditorconfig,
             addVscode,
-            extensionGroupIds,
+            recommendedExtensionIds,
             addDevcontainer,
             devcontainerId,
             includeGithubCliInDevcontainer,
-            includeEditorExtensionsInDevcontainer,
+            addDevcontainerExtensions,
+            devcontainerExtensionIds,
         },
         cwd,
     )
 
     section('Step 6: Confirmation')
+    printSummary(buildSummaryLines(merged))
     const confirmed = await askYesNo('confirmed', 'Proceed?', false)
 
     return {
