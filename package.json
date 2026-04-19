@@ -1,31 +1,31 @@
 {
-  "name": "project-init",
-  "version": "0.1.0",
-  "description": "Bootstrap a repository with optional GitHub and dev container setup",
-  "type": "module",
-  "bin": {
-    "project-init": "bin/project-init.js"
-  },
-  "scripts": {
-    "start": "node ./bin/project-init.js",
-    "lint": "biome check .",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
-    "check": "npm run lint && npm run format:check && npm test",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "dependencies": {
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0",
-    "inquirer": "^12.6.3"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@vitest/coverage-v8": "^3.2.4",
-    "vitest": "^3.2.4"
-  }
+    "name": "project-init",
+    "version": "0.1.0",
+    "description": "Bootstrap a repository with optional GitHub and dev container setup",
+    "type": "module",
+    "bin": {
+        "project-init": "bin/project-init.js"
+    },
+    "scripts": {
+        "start": "node ./bin/project-init.js",
+        "lint": "biome check .",
+        "format": "biome format --write .",
+        "format:check": "biome format .",
+        "check": "npm run lint && npm run format:check && npm test",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "dependencies": {
+        "chalk": "^5.4.1",
+        "commander": "^14.0.0",
+        "inquirer": "^12.6.3"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
+        "@vitest/coverage-v8": "^3.2.4",
+        "vitest": "^3.2.4"
+    }
 }

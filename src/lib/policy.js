@@ -7,9 +7,9 @@
  * @type {string[]}
  */
 export const allowedBootstrapPaths = [
-  "README.md",
-  ".gitignore",
-  ".editorconfig",
-  ".vscode/extensions.json",
-  ".devcontainer/devcontainer.json",
-];
+    'README.md',
+    '.gitignore',
+    '.editorconfig',
+    '.vscode/extensions.json',
+    '.devcontainer/devcontainer.json',
+]

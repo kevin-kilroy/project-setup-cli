@@ -1,7 +1,7 @@
-import { mkdir, readdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { templateDefaults } from "../config/defaults.js";
-import { devcontainerOptions } from "../config/devcontainers.js";
+import { mkdir, readdir, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { templateDefaults } from '../config/defaults.js'
+import { devcontainerOptions } from '../config/devcontainers.js'
 
 /**
  * @typedef {Object} FileAnswers
@@ -27,7 +27,7 @@ import { devcontainerOptions } from "../config/devcontainers.js";
  * @returns {string[]}
  */
 export function collectUniqueExtensionIds(extensionIds) {
-  return [...new Set(extensionIds)];
+    return [...new Set(extensionIds)]
 }
 
 /**
@@ -37,7 +37,7 @@ export function collectUniqueExtensionIds(extensionIds) {
  * @returns {string}
  */
 function renderReadme(projectName) {
-  return templateDefaults.readme.replace("{{PROJECT_NAME}}", projectName);
+    return templateDefaults.readme.replace('{{PROJECT_NAME}}', projectName)
 }
 
 /**
@@ -52,32 +52,28 @@ function renderReadme(projectName) {
  * }}
  */
 function buildDevcontainerConfig(answers) {
-  const option = devcontainerOptions.find(
-    (candidate) => candidate.id === answers.devcontainerId,
-  );
-  if (!option) {
-    throw new Error(`Unknown dev container id: ${answers.devcontainerId}`);
-  }
+    const option = devcontainerOptions.find((candidate) => candidate.id === answers.devcontainerId)
+    if (!option) {
+        throw new Error(`Unknown dev container id: ${answers.devcontainerId}`)
+    }
 
-  const features = {};
-  if (answers.includeGithubCliInDevcontainer) {
-    features["ghcr.io/devcontainers/features/github-cli:1"] = {};
-  }
+    const features = {}
+    if (answers.includeGithubCliInDevcontainer) {
+        features['ghcr.io/devcontainers/features/github-cli:1'] = {}
+    }
 
-  const customizations = {};
-  if (answers.addDevcontainerExtensions) {
-    const uniqueExtensions = collectUniqueExtensionIds(
-      answers.devcontainerExtensionIds,
-    );
-    customizations.vscode = { extensions: uniqueExtensions };
-  }
+    const customizations = {}
+    if (answers.addDevcontainerExtensions) {
+        const uniqueExtensions = collectUniqueExtensionIds(answers.devcontainerExtensionIds)
+        customizations.vscode = { extensions: uniqueExtensions }
+    }
 
-  return {
-    name: `${answers.projectName} dev container`,
-    image: option.image,
-    features,
-    customizations,
-  };
+    return {
+        name: `${answers.projectName} dev container`,
+        image: option.image,
+        features,
+        customizations,
+    }
 }
 
 /**
@@ -88,23 +84,21 @@ function buildDevcontainerConfig(answers) {
  * @returns {Promise<void>}
  */
 async function assertNonEmptyDirectoryAllowed(projectPath, allowExisting) {
-  if (allowExisting) {
-    return;
-  }
+    if (allowExisting) {
+        return
+    }
 
-  try {
-    const entries = await readdir(projectPath);
-    if (entries.length > 0) {
-      throw new Error(
-        `Target directory already exists and is not empty: ${projectPath}`,
-      );
+    try {
+        const entries = await readdir(projectPath)
+        if (entries.length > 0) {
+            throw new Error(`Target directory already exists and is not empty: ${projectPath}`)
+        }
+    } catch (error) {
+        if (error && error.code === 'ENOENT') {
+            return
+        }
+        throw error
     }
-  } catch (error) {
-    if (error && error.code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
 }
 
 /**
@@ -114,59 +108,50 @@ async function assertNonEmptyDirectoryAllowed(projectPath, allowExisting) {
  * @returns {Promise<void>}
  */
 export async function createProjectFiles(answers) {
-  await assertNonEmptyDirectoryAllowed(
-    answers.projectPath,
-    answers.useCurrentDirectory,
-  );
-  await mkdir(answers.projectPath, { recursive: true });
+    await assertNonEmptyDirectoryAllowed(answers.projectPath, answers.useCurrentDirectory)
+    await mkdir(answers.projectPath, { recursive: true })
 
-  const extensionIds = collectUniqueExtensionIds(
-    answers.recommendedExtensionIds,
-  );
+    const extensionIds = collectUniqueExtensionIds(answers.recommendedExtensionIds)
 
-  if (answers.addReadme) {
-    await writeFile(
-      path.join(answers.projectPath, "README.md"),
-      renderReadme(answers.projectName),
-      "utf8",
-    );
-  }
+    if (answers.addReadme) {
+        await writeFile(
+            path.join(answers.projectPath, 'README.md'),
+            renderReadme(answers.projectName),
+            'utf8',
+        )
+    }
 
-  if (answers.addGitignore) {
-    await writeFile(
-      path.join(answers.projectPath, ".gitignore"),
-      templateDefaults.gitignore,
-      "utf8",
-    );
-  }
+    if (answers.addGitignore) {
+        await writeFile(
+            path.join(answers.projectPath, '.gitignore'),
+            templateDefaults.gitignore,
+            'utf8',
+        )
+    }
 
-  if (answers.addEditorconfig) {
-    await writeFile(
-      path.join(answers.projectPath, ".editorconfig"),
-      templateDefaults.editorconfig,
-      "utf8",
-    );
-  }
+    if (answers.addEditorconfig) {
+        await writeFile(
+            path.join(answers.projectPath, '.editorconfig'),
+            templateDefaults.editorconfig,
+            'utf8',
+        )
+    }
 
-  if (answers.addVscode) {
-    const vscodeDir = path.join(answers.projectPath, ".vscode");
-    await mkdir(vscodeDir, { recursive: true });
-    const content = JSON.stringify({ recommendations: extensionIds }, null, 2);
-    await writeFile(
-      path.join(vscodeDir, "extensions.json"),
-      `${content}\n`,
-      "utf8",
-    );
-  }
+    if (answers.addVscode) {
+        const vscodeDir = path.join(answers.projectPath, '.vscode')
+        await mkdir(vscodeDir, { recursive: true })
+        const content = JSON.stringify({ recommendations: extensionIds }, null, 2)
+        await writeFile(path.join(vscodeDir, 'extensions.json'), `${content}\n`, 'utf8')
+    }
 
-  if (answers.addDevcontainer) {
-    const devcontainerDir = path.join(answers.projectPath, ".devcontainer");
-    await mkdir(devcontainerDir, { recursive: true });
-    const config = buildDevcontainerConfig(answers);
-    await writeFile(
-      path.join(devcontainerDir, "devcontainer.json"),
-      `${JSON.stringify(config, null, 2)}\n`,
-      "utf8",
-    );
-  }
+    if (answers.addDevcontainer) {
+        const devcontainerDir = path.join(answers.projectPath, '.devcontainer')
+        await mkdir(devcontainerDir, { recursive: true })
+        const config = buildDevcontainerConfig(answers)
+        await writeFile(
+            path.join(devcontainerDir, 'devcontainer.json'),
+            `${JSON.stringify(config, null, 2)}\n`,
+            'utf8',
+        )
+    }
 }

@@ -1,4 +1,4 @@
-import { runCommand } from "./exec.js";
+import { runCommand } from './exec.js'
 
 /**
  * @typedef {Object} GithubRepoOptions
@@ -15,27 +15,27 @@ import { runCommand } from "./exec.js";
  * @returns {Promise<void>}
  */
 export async function createGithubRepo({
-  projectPath,
-  projectName,
-  githubVisibility,
-  githubDescription,
-}) {
-  await runCommand("gh", ["auth", "status"], { cwd: projectPath });
-
-  const args = [
-    "repo",
-    "create",
+    projectPath,
     projectName,
-    "--source",
-    ".",
-    "--remote",
-    "origin",
-    githubVisibility === "public" ? "--public" : "--private",
-  ];
+    githubVisibility,
+    githubDescription,
+}) {
+    await runCommand('gh', ['auth', 'status'], { cwd: projectPath })
 
-  if (githubDescription) {
-    args.push("--description", githubDescription);
-  }
+    const args = [
+        'repo',
+        'create',
+        projectName,
+        '--source',
+        '.',
+        '--remote',
+        'origin',
+        githubVisibility === 'public' ? '--public' : '--private',
+    ]
 
-  await runCommand("gh", args, { cwd: projectPath });
+    if (githubDescription) {
+        args.push('--description', githubDescription)
+    }
+
+    await runCommand('gh', args, { cwd: projectPath })
 }

@@ -1,7 +1,7 @@
-import { access, readdir, rm } from "node:fs/promises";
-import path from "node:path";
-import { runCommand } from "./exec.js";
-import { allowedBootstrapPaths } from "./policy.js";
+import { access, readdir, rm } from 'node:fs/promises'
+import path from 'node:path'
+import { runCommand } from './exec.js'
+import { allowedBootstrapPaths } from './policy.js'
 
 /**
  * @typedef {Object} CleanupPlan
@@ -36,12 +36,12 @@ import { allowedBootstrapPaths } from "./policy.js";
  * @returns {Promise<boolean>}
  */
 async function pathExists(targetPath) {
-  try {
-    await access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
+    try {
+        await access(targetPath)
+        return true
+    } catch {
+        return false
+    }
 }
 
 /**
@@ -51,14 +51,14 @@ async function pathExists(targetPath) {
  * @returns {Promise<void>}
  */
 async function removeDirIfEmpty(directoryPath) {
-  try {
-    const entries = await readdir(directoryPath);
-    if (entries.length === 0) {
-      await rm(directoryPath, { recursive: false, force: false });
+    try {
+        const entries = await readdir(directoryPath)
+        if (entries.length === 0) {
+            await rm(directoryPath, { recursive: false, force: false })
+        }
+    } catch {
+        // Best-effort cleanup only.
     }
-  } catch {
-    // Best-effort cleanup only.
-  }
 }
 
 /**
@@ -68,23 +68,23 @@ async function removeDirIfEmpty(directoryPath) {
  * @returns {Promise<CleanupPlan>}
  */
 export async function getCleanupPlan(projectPath) {
-  const existingPaths = [];
-  const missingPaths = [];
+    const existingPaths = []
+    const missingPaths = []
 
-  for (const relativePath of allowedBootstrapPaths) {
-    const absolutePath = path.join(projectPath, relativePath);
-    if (await pathExists(absolutePath)) {
-      existingPaths.push(relativePath);
-    } else {
-      missingPaths.push(relativePath);
+    for (const relativePath of allowedBootstrapPaths) {
+        const absolutePath = path.join(projectPath, relativePath)
+        if (await pathExists(absolutePath)) {
+            existingPaths.push(relativePath)
+        } else {
+            missingPaths.push(relativePath)
+        }
     }
-  }
 
-  return {
-    projectPath,
-    existingPaths,
-    missingPaths,
-  };
+    return {
+        projectPath,
+        existingPaths,
+        missingPaths,
+    }
 }
 
 /**
@@ -95,99 +95,99 @@ export async function getCleanupPlan(projectPath) {
  * @returns {Promise<CleanupResult>}
  */
 export async function cleanupProjectArtifacts(projectPath, options = {}) {
-  const dryRun = options.dryRun === true;
-  const includeGit = options.includeGit === true;
-  const cleanupMode = options.cleanupMode || "generated";
+    const dryRun = options.dryRun === true
+    const includeGit = options.includeGit === true
+    const cleanupMode = options.cleanupMode || 'generated'
 
-  const plan = await getCleanupPlan(projectPath);
-  const deletedPaths = [];
-  const failures = [];
-  let gitRemoteRemoved = false;
+    const plan = await getCleanupPlan(projectPath)
+    const deletedPaths = []
+    const failures = []
+    let gitRemoteRemoved = false
 
-  if (!dryRun) {
-    if (cleanupMode === "directory") {
-      try {
-        await rm(projectPath, { recursive: true, force: false });
-        deletedPaths.push(".");
-      } catch (error) {
-        failures.push({
-          path: projectPath,
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
+    if (!dryRun) {
+        if (cleanupMode === 'directory') {
+            try {
+                await rm(projectPath, { recursive: true, force: false })
+                deletedPaths.push('.')
+            } catch (error) {
+                failures.push({
+                    path: projectPath,
+                    message: error instanceof Error ? error.message : String(error),
+                })
+            }
 
-      return {
-        plan,
-        deletedPaths,
-        failures,
-        gitRemoteRemoved,
-      };
-    }
-
-    if (cleanupMode === "contents") {
-      let entries = [];
-      try {
-        entries = await readdir(projectPath);
-      } catch (error) {
-        failures.push({
-          path: projectPath,
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
-
-      for (const entry of entries) {
-        const absolutePath = path.join(projectPath, entry);
-        try {
-          await rm(absolutePath, { recursive: true, force: true });
-          deletedPaths.push(entry);
-        } catch (error) {
-          failures.push({
-            path: entry,
-            message: error instanceof Error ? error.message : String(error),
-          });
+            return {
+                plan,
+                deletedPaths,
+                failures,
+                gitRemoteRemoved,
+            }
         }
-      }
 
-      return {
+        if (cleanupMode === 'contents') {
+            let entries = []
+            try {
+                entries = await readdir(projectPath)
+            } catch (error) {
+                failures.push({
+                    path: projectPath,
+                    message: error instanceof Error ? error.message : String(error),
+                })
+            }
+
+            for (const entry of entries) {
+                const absolutePath = path.join(projectPath, entry)
+                try {
+                    await rm(absolutePath, { recursive: true, force: true })
+                    deletedPaths.push(entry)
+                } catch (error) {
+                    failures.push({
+                        path: entry,
+                        message: error instanceof Error ? error.message : String(error),
+                    })
+                }
+            }
+
+            return {
+                plan,
+                deletedPaths,
+                failures,
+                gitRemoteRemoved,
+            }
+        }
+
+        for (const relativePath of plan.existingPaths) {
+            const absolutePath = path.join(projectPath, relativePath)
+            try {
+                await rm(absolutePath, { force: true })
+                deletedPaths.push(relativePath)
+            } catch (error) {
+                failures.push({
+                    path: relativePath,
+                    message: error instanceof Error ? error.message : String(error),
+                })
+            }
+        }
+
+        await removeDirIfEmpty(path.join(projectPath, '.vscode'))
+        await removeDirIfEmpty(path.join(projectPath, '.devcontainer'))
+
+        if (includeGit) {
+            try {
+                await runCommand('git', ['remote', 'remove', 'origin'], {
+                    cwd: projectPath,
+                })
+                gitRemoteRemoved = true
+            } catch {
+                gitRemoteRemoved = false
+            }
+        }
+    }
+
+    return {
         plan,
         deletedPaths,
         failures,
         gitRemoteRemoved,
-      };
     }
-
-    for (const relativePath of plan.existingPaths) {
-      const absolutePath = path.join(projectPath, relativePath);
-      try {
-        await rm(absolutePath, { force: true });
-        deletedPaths.push(relativePath);
-      } catch (error) {
-        failures.push({
-          path: relativePath,
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-
-    await removeDirIfEmpty(path.join(projectPath, ".vscode"));
-    await removeDirIfEmpty(path.join(projectPath, ".devcontainer"));
-
-    if (includeGit) {
-      try {
-        await runCommand("git", ["remote", "remove", "origin"], {
-          cwd: projectPath,
-        });
-        gitRemoteRemoved = true;
-      } catch {
-        gitRemoteRemoved = false;
-      }
-    }
-  }
-
-  return {
-    plan,
-    deletedPaths,
-    failures,
-    gitRemoteRemoved,
-  };
 }
